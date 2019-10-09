@@ -6,17 +6,18 @@
 ###########################################################################################################################################################################################################################################################
 
 ###########################################################################################################################################################################################################################################################
-# this file may be used to override configuration from cmdline
--include config.mk
+# this files may be used to override configuration from cmdline
+# use *.local.mk for local configurations that won't be on the vcs
+-include conf/*.mk
 
 # declare inputs and targets
 _srcs          := main.cpp minlog.c
 _targets       := minlogApp
-_resources     := 
+_resources     :=
 
 # declare libs to link against
-LIBS           ?= 
-ARLIBS         ?= 
+LIBS           ?=
+ARLIBS         ?=
 
 # one may declare also extra include dirs (maybe from config.mk)
 EXTRA_INCDIRS  ?=
