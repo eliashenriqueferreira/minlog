@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <string>
-#include <unistd.h>  // for usleep
-
 #include <stdarg.h>
-
 
 #include "../inc/minlog.h"
 
@@ -36,6 +33,12 @@ int main(int argc, char **argv)
     return 0;
 }
 
+#ifdef _WIN32
+#pragma warning (disable: 4244)
+#pragma warning (disable: 4700)
+//#pragma warning (disable: 4996)
+#endif
+
 int test_minlog(int argc, char **argv)
 {
     /// Um log precisa de um inicializador
@@ -67,7 +70,7 @@ int test_minlog(int argc, char **argv)
     MINLOG("MINLOG com 7 parametros i. i1=%d i2=%d i3=%d i4=%d i5=%d i6=%d i7=%d", i1,i2,i3,i4,i5,i6,i7);
 
 
-    MINLOG("No parameters.");
+	MINLOG("No parameters.");
 
     __uint64_t *pointer1 = &p1;
     __uint64_t *pointer7 = &p7;
@@ -102,5 +105,6 @@ int test_minlog(int argc, char **argv)
 //    [GMT 2019-10-04 18:12:19.026][W]{--- JOGADA PERIGOSA ---}[256][src/minlog.c]
 //    [GMT 2019-10-04 18:12:19.026][D]{Endereco &result=0x7fffffffdbf0 Valor=8}[260][src/minlog.c]
 
+	return 0;
 }
 
