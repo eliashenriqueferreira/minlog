@@ -20,8 +20,10 @@
 
 #include "../inc/minlog.h"
 
+#ifdef __GNUC__
 //#pragma GCC diagnostic [warning|error|ignored] OPTION
 #pragma GCC diagnostic warning "-Wformat=0"
+#endif
 
 // Levels of Identification - Trace, Debug, Info, Warning, Error, Critical, Off
 char minlog_level_char[] = {'T','D','I','W','E','C','O'};
@@ -30,6 +32,7 @@ typedef struct minlog_st
 {
         int level;
         char log_file_path[FILENAME_MAX];   // 4096 for linux
+		char aux_buffer[1024];				// Aux Buffer to be used by thread.
 } minlog_t;
 minlog_t *pminlog = NULL;
 
@@ -45,12 +48,11 @@ char* GetEnv(char *name)
 //	buffer - Buffer to store the value of the environment variable.
 //	numberOfElements - Size of buffer.
 //	varname - Environment variable name.
-	char buffer[1024];
 	size_t pReturnValue;
-	getenv_s(&pReturnValue, buffer, sizeof(buffer), name);
-	if (pReturnValue > 0 && pReturnValue < sizeof(buffer))
+	getenv_s(&pReturnValue, pminlog->aux_buffer, sizeof(pminlog->aux_buffer), name);
+	if (pReturnValue > 0 && pReturnValue < sizeof(pminlog->aux_buffer))
 	{
-		return buffer;	// TODO - There is something wrong here - // BUG BUG BUG
+		return pminlog->aux_buffer;	// TODO - There is something wrong here - // BUG BUG BUG
 	}
 	return NULL;
 #else
@@ -75,7 +77,7 @@ char *getMinimalTimeStamp(char *pbuf, size_t buflen)
     //    }
 
     // Minimal Timestamp
-	SPRINTF(pbuf, buflen, "[%lds-%ldns]", tms.tv_sec, tms.tv_nsec);
+	SPRINTF(pbuf, buflen, "[%llds-%ldns]", tms.tv_sec, tms.tv_nsec);
     return pbuf;
 }
 
@@ -98,16 +100,16 @@ char *getGMTTimeStamp(char *pbuf, size_t buflen)
     //    }
     //time (&rawtime);
     rawtime = tms.tv_sec;
-	struct tm* tmGMT;
+	struct tm tmGMT;
 
-	GMTIME(&rawtime, tmGMT);
+	GMTIME(&rawtime, &tmGMT);
 	//errno_t    gmtime_s(struct tm* tmDest, const __time_t * sourceTime);		// Windows
 	//struct tm* gmtime_r(const time_t * timep, struct tm* result);				// Linux
 
 
     // %F  Short YYYY-MM-DD date, equivalent to %Y-%m-%d     2001-08-23
     // %T ISO 8601 time format (HH:MM:SS), equivalent to %H:%M:%S 14:55:02
-    strftime(buf_aux,40,"[GMT %F %T.%%.3ld]",tmGMT);
+    strftime(buf_aux,40,"[GMT %F %T.%%.3ld]",&tmGMT);
 
 	SPRINTF(pbuf, buflen, buf_aux, tms.tv_nsec / 1000000); 
 
@@ -133,15 +135,15 @@ char *getLOCALTimeStamp(char *pbuf, size_t buflen)
     //    }
 
     rawtime = tms.tv_sec;
-	struct tm* tmLoc;
-	GMTIME(&rawtime, tmLoc);
+	struct tm tmLoc;
+	GMTIME(&rawtime, &tmLoc);
 	//errno_t    gmtime_s(struct tm* tmDest, const __time_t * sourceTime);		// Windows
 	//struct tm* gmtime_r(const time_t * timep, struct tm* result);				// Linux
 
 
     // %F  Short YYYY-MM-DD date, equivalent to %Y-%m-%d     2001-08-23
     // %T ISO 8601 time format (HH:MM:SS), equivalent to %H:%M:%S 14:55:02
-    strftime(buf_aux,40,"[LOC %F %T.%%.3ld]",tmLoc);
+    strftime(buf_aux,40,"[LOC %F %T.%%.3ld]",&tmLoc);
     SPRINTF(pbuf, buflen, buf_aux, tms.tv_nsec/1000000);
     return pbuf;
 }
@@ -217,6 +219,7 @@ int minlogfile(char *filepath, char *buffer)
 
     fclose(pfl);
 
+	return 0;
 }
 
 int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtmsg, int ctparam, ...)
@@ -249,5 +252,6 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
         printf("%s[%c]{%s}[%d][%s]\n", ptimestamp, minlog_level_char[level], msgbuffer, sourceline, psourcefile );
     }
 
+	return 0;
 }
 

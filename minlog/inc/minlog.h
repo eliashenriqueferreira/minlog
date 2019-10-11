@@ -18,6 +18,7 @@ typedef int pid_t;
 #define STRCPY(d,s,n)   strcpy_s(d,n,s) // errno_t strcpy_s(   char *dest,   rsize_t dest_size,   const char *src);
 #define vsnprintf   vsprintf_s          // int vsprintf_s(char *buffer, size_t numberOfElements, const char *format, va_list argptr);       // Windows  // int vsnprintf(char* str, size_t size, const char* format, va_list ap);           // Linux
 #define GMTIME(s,d) gmtime_s(d, s)      //errno_t    gmtime_s(struct tm* tmDest, const __time_t * sourceTime);      // Windows
+#define getpid	GetCurrentProcessId		// DWORD GetCurrentProcessId();
 #else
 #include <unistd.h>  // for usleep
 #define SPRINTF snprintf                //int snprintf(char *str, size_t size, const char *format, ...);
