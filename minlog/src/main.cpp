@@ -5,8 +5,8 @@
 #include "../inc/minlog.h"
 
 int test_minlog(int argc, char **argv);
-
-
+void test_dump_stack();
+void show_log_init(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
@@ -24,7 +24,10 @@ int main(int argc, char **argv)
         minlog_open(argv[0], MINLOG_LEVEL_DEBUG, NULL);   // Initializing on console
     }
 
-    test_minlog(argc,argv);
+	show_log_init(argc,argv);
+
+	test_dump_stack();
+    //test_minlog(argc,argv);
 
     return 0;
 }
@@ -34,6 +37,39 @@ int main(int argc, char **argv)
 #pragma warning (disable: 4700)
 //#pragma warning (disable: 4996)
 #endif
+
+void test_dump_stack()
+{
+	int int1 = 0x11111111;
+	int int2 = 0x22222222;
+	short short3 = 0x3333;
+	short short4 = 0x4444;
+	unsigned char char5 = 0x55;
+	char buffer[] = { 0xbf,15,15,15,15,15,15,15,15,15,15,15,15,15,0xbf };
+	unsigned char char6 = 0x66;
+	__uint64_t uint64_7 = 0x7777777777777777;
+	__uint64_t uint64_8 = 0x8888888888888888;
+
+	MINLOG_DEBUG(" - - - - - - - - - - - - SHOWING MEMORY STACK STRUCTURE - - - - - - - - - - - - - - - - - - ");
+
+	mindump((__uint64_t)&int1, -64);
+	mindump((__uint64_t)&int1, +64);
+	mindump((__uint64_t)&int1, sizeof(int1));
+	mindump((__uint64_t)&int2, sizeof(int2));
+	mindump((__uint64_t)&short3, sizeof(short3));
+	mindump((__uint64_t)&short4, sizeof(short4));
+	mindump((__uint64_t)&char5, sizeof(char5));
+	mindump((__uint64_t)&char6, sizeof(char6));
+	mindump((__uint64_t)&uint64_7, sizeof(uint64_7));
+	mindump((__uint64_t)&uint64_8, sizeof(uint64_8));
+	mindump((__uint64_t)buffer, sizeof(buffer));
+	__uint64_t somatudo = int1 + int2 + short3 + short4 + char5 + char6 + uint64_7 + uint64_8;
+	for (int i = 0; i < sizeof(buffer); i++)
+	{
+		somatudo += buffer[i];
+	}
+	mindump((__uint64_t)&somatudo, sizeof(somatudo));
+}
 
 int test_minlog(int argc, char **argv)
 {
@@ -85,6 +121,7 @@ int test_minlog(int argc, char **argv)
 	MINLOG_DEBUG("  result==> [%8.8p]=[%8.8X]", &result, result);
 	MINLOG_DEBUG("diffP1Result[%.16p]=[%.16x]", &diffP1Result, diffP1Result);
 
+
     if (0x007BFC00 == (__uint64_t)(&result)) {
         // Run, Copy Adresses and Rebuild;
         MINLOG_WARNING("------- NOT DANGEROUS IF YOU KNOW ADDRESS ALLOCATION  -------");
@@ -95,45 +132,26 @@ int test_minlog(int argc, char **argv)
 	return 0;
 }
 
+void show_log_init(int argc, char** argv)
+{
+#ifdef _MSC_VER
+	MINLOG_INFO("INFO: Windows Aplication");
+#ifdef _WIN64
+	MINLOG_INFO("INFO: compiled in 64bits");
+#elif _WIN32
+	MINLOG_INFO("INFO: compiled in 32bits");
+#endif
+
+#ifdef _DEBUG
+	MINLOG_INFO("INFO: This is in DEBUG mode");
+#elif NDEBUG
+	MINLOG_INFO("INFO: This is NOT in DEBUG mode");
+#endif
+#endif
+
+}
+
 /*
-[GMT 2019-10-11 20:15:45.081][D]{Stack p1==> [0136F7D0]=[00000001]}[71][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.084][D]{Stack p2==> [0136F7C0]=[00000002]}[72][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.093][D]{Stack p3==> [0136F7B0]=[00000003]}[73][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.097][D]{Stack p4==> [0136F7A0]=[00000004]}[74][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.106][D]{Stack p5==> [0136F790]=[00000005]}[75][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.120][D]{Stack p6==> [0136F780]=[00000006]}[76][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.126][D]{Stack p7==> [0136F770]=[00000007]}[77][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.127][D]{Stack i1==> [0136F764]=[00000001]}[78][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.135][D]{Stack i2==> [0136F758]=[00000002]}[79][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.150][D]{Stack i3==> [0136F74C]=[00000003]}[80][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.155][D]{Stack i4==> [0136F740]=[00000004]}[81][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.156][D]{Stack i5==> [0136F734]=[00000005]}[82][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.164][D]{Stack i6==> [0136F728]=[00000006]}[83][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.177][D]{Stack i7==> [0136F71C]=[00000007]}[84][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.189][D]{  result==> [0136F70C]=[65966596]}[85][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.204][D]{diffP1Result[0136F6FC]=[00000018]}[86][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:15:45.208][D]{New Result &result=0136F70C Value=65966596}[93][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
 
-
-
-[GMT 2019-10-11 20:03:56.266][I]{MINLOG with 7 parameters i. i1=1 i2=2 i3=3 i4=4 i5=5 i6=6 i7=7}[64][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.281][I]{No parameters.}[66][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.286][D]{Stack p1==> [007BFCC4]=[00000001]}[71][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.294][D]{Stack p2==> [007BFCB4]=[00000002]}[72][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.295][D]{Stack p3==> [007BFCA4]=[00000003]}[73][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.299][D]{Stack p4==> [007BFC94]=[00000004]}[74][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.307][D]{Stack p5==> [007BFC84]=[00000005]}[75][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.311][D]{Stack p6==> [007BFC74]=[00000006]}[76][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.326][D]{Stack p7==> [007BFC64]=[00000007]}[77][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.328][D]{Stack i1==> [007BFC58]=[00000001]}[78][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.330][D]{Stack i2==> [007BFC4C]=[00000002]}[79][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.341][D]{Stack i3==> [007BFC40]=[00000003]}[80][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.346][D]{Stack i4==> [007BFC34]=[00000004]}[81][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.356][D]{Stack i5==> [007BFC28]=[00000005]}[82][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.359][D]{Stack i6==> [007BFC1C]=[00000006]}[83][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.367][D]{Stack i7==> [007BFC10]=[00000007]}[84][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.373][D]{  result==> [007BFC00]=[65966596]}[85][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.382][D]{diffP7Result[007BFBF0]=[0000000C]}[86][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
-[GMT 2019-10-11 20:03:56.393][D]{New Result &result=007BFC00 Value=65966596}[93][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
 
 */

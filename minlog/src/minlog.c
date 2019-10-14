@@ -160,7 +160,7 @@ void *minlog_open(const char *argv_zero, int level, const char *pname_aux)
     // Initializing File Path
     char* ppath = GetEnv("MINLOG_LOGDIR");
 
-    int v0_len = strlen(argv_zero);
+    int v0_len = (int)strlen(argv_zero);
     char *filename_only = strrchr(argv_zero, '/') + 1;
 
     if (pname_aux)      // For log on files
@@ -252,6 +252,53 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
         printf("%s[%c]{%s}[%d][%s]\n", ptimestamp, minlog_level_char[level], msgbuffer, sourceline, psourcefile );
     }
 
+	return 0;
+}
+
+int mindump(__uint64_t address, int size)
+{
+	int indx = 0;
+	char line_buffer[1024];
+	char charset[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
+	unsigned char* pmem = (unsigned char *)address;
+
+	SPRINTF(line_buffer, sizeof(line_buffer), "[%p] %+3.3d ", pmem, size);
+	// 01234567  . 
+	int c = 0;
+	while (line_buffer[c] != '\0')
+	{
+		c++;
+	}
+
+	while (size > 0 && indx < size)
+	{
+		line_buffer[c++] = charset[(*pmem) / 16];
+		line_buffer[c++] = charset[(*pmem) % 16];
+		line_buffer[c++] = ' ';
+		indx++;
+		pmem++;
+	}
+	while (size < 0 && indx > size)
+	{
+		line_buffer[c++] = charset[(*pmem) / 16];
+		line_buffer[c++] = charset[(*pmem) % 16];
+		line_buffer[c++] = ' ';
+		indx--;
+		pmem--;
+	}
+	line_buffer[c] = '\0';
+
+
+	if (pminlog->log_file_path[0])
+	{
+		minlogfile(pminlog->log_file_path, line_buffer);
+	}
+	else
+	{
+		// Output to console
+		printf("%s\n", line_buffer);
+	}
 	return 0;
 }
 
