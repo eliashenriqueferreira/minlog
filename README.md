@@ -29,11 +29,13 @@ It can be built using the [official gcc image](https://hub.docker.com/_/gcc):
 
 (It's a good way to cross-compile Linux binaries from a Windows host)
 
-## Memory Dumper 
-For me and old technicians that worked between 80's years a pointer is an address of memory.
-Mimdump routine show data around an address passed as parameter.
-Above we have 4 outputs configurations on Windows Machine;
-----------------------------------------------------------------------------
+## Memory Dumper
+
+<br>For me and old technicians that worked between 80's years a pointer is an address of memory.
+<br>Mimdump routine show data around an address passed as parameter.
+<br>Above we have 4 outputs configurations on Windows Machine;
+<br>----------------------------------------------------------------------------
+```bash
 DEBUG 64 BITS
 Hello World! Lets create a minimal logger for applications!
 [GMT 2019-10-14 19:32:08.761][I]{INFO: Windows Aplication}[138][C:\ehf\myProjs\minlog-master\minlog\src\main.cpp]
@@ -109,5 +111,6 @@ Hello World! Lets create a minimal logger for applications!
 [0133FC30] +008 88 88 88 88 88 88 88 88
 [0133FC4C] +015 BF 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F BF
 [0133FC40] +008 A5 AB 33 33 00 00 00 00
+```
 
 
