@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string>
 #include <stdarg.h>
 
 #include "../inc/minlog.h"
@@ -10,9 +9,7 @@ void show_log_init(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
-	std::string str(argv[0]);
-	
-    printf("Hello World! Lets create a minimal logger for applications writed in CPP!\n");
+    printf("Hello World! Lets create a minimal logger for applications writed in C!\n");
 
     if (argc > 1)
     {
@@ -150,7 +147,3 @@ void show_log_init(int argc, char** argv)
 
 }
 
-/*
-
-
-*/

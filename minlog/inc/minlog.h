@@ -10,7 +10,11 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#ifdef __cplusplus
 typedef uint64_t __uint64_t;
+#else
+typedef unsigned long long __uint64_t;
+#endif
 typedef int pid_t;
 #define usleep(us)  Sleep(us/1000+1)
 #define SPRINTF sprintf_s               // int sprintf_s(char *buffer,size_t sizeOfBuffer,const char *format,...);      // Windows
