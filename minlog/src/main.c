@@ -9,21 +9,56 @@ void show_log_init(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
+    int i;
+    char c = ' ';
+    LOGHANDLE log;
+
     printf("Hello World! Lets create a minimal logger for applications writed in C!\n");
 
     if (argc > 1)
     {
-        minlog_open(argv[0], MINLOG_LEVEL_DEBUG, argv[1]);   // Initializing with logfiles
+        log = minlog_file_open(argv[0], MINLOG_LEVEL_DEBUG, argv[1], MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
     }
     else
     {
-        minlog_open(argv[0], MINLOG_LEVEL_DEBUG, NULL);   // Initializing on console
+        log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing on console
     }
 
     show_log_init(argc,argv);
 
     test_dump_stack();
-    //test_minlog(argc,argv);
+    test_minlog(argc,argv);
+    minlog_close(log);
+
+    /// Check timestamp formats and types 
+    printf("\n----------------- Check Timestamp Local ---------------------\n");
+    log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_LOCAL);
+    show_log_init(argc, argv);
+    minlog_close(log);
+
+    printf("\n----------------- Check Timestamp for Seconds only ---------------------\n");
+    log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_SECONDS);
+    for (i = 0x20; i < 0x7f; i++, c++)
+    {
+        usleep(1000);
+        MINLOG_CRITICAL("Message with %d parameters. Decimal %.3d. Hexadecimal 0x%x. Character %c. Negative %d", 5, i, i, c, (-i));
+    }
+    minlog_close(log);
+
+//// [GMT 2021-07-14 13:11:24.206][D]{  result==> [0079FAC4]=[65966596]}[146][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [GMT 2021-07-14 13:11:24.207][D]{diffP1Result[0079FAB4]=[0000000000000018]}[147][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [GMT 2021-07-14 13:11:24.210][D]{New Result &result=0079FAC4 Value=65966596}[155][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// 
+//// ----------------- Check Timestamp Local ---------------------
+//// [LOC 2021-07-14 10:11:24.219][I]{INFO: Windows Aplication compiled with MSC_VER=1700}[163][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [LOC 2021-07-14 10:11:24.219][I]{INFO: compiled in 32bits}[167][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [LOC 2021-07-14 10:11:24.220][I]{INFO: This is in DEBUG mode}[171][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// 
+//// ----------------- Check Timestamp for Seconds only ---------------------
+//// [UPTIME:000000000000.234][C]{Message with 5 parameters. Decimal 032. Hexadecimal 0x20. Character  . Negative -32}[44][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [UPTIME:000000000000.249][C]{Message with 5 parameters. Decimal 033. Hexadecimal 0x21. Character !. Negative -33}[44][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [UPTIME:000000000000.264][C]{Message with 5 parameters. Decimal 034. Hexadecimal 0x22. Character ". Negative -34}[44][f:\proj\ccpp\minlog\minlog\src\main.c]
+//// [UPTIME:000000000000.280][C]{Message with 5 parameters. Decimal 035. Hexadecimal 0x23. Character #. Negative -35}[44][f:\proj\ccpp\minlog\minlog\src\main.c]
 
     return 0;
 }
@@ -45,6 +80,8 @@ void test_dump_stack()
     unsigned char char6 = 0x66;
     __uint64_t uint64_7 = 0x7777777777777777;
     __uint64_t uint64_8 = 0x8888888888888888;
+	__uint64_t somatudo;
+    int i;
 
     MINLOG_DEBUG(" - - - - - - - - - - - - SHOWING MEMORY STACK STRUCTURE - - - - - - - - - - - - - - - - - - ");
 
@@ -59,8 +96,9 @@ void test_dump_stack()
     mindump((__uint64_t)&uint64_7, sizeof(uint64_7));
     mindump((__uint64_t)&uint64_8, sizeof(uint64_8));
     mindump((__uint64_t)buffer, sizeof(buffer));
-    __uint64_t somatudo = int1 + int2 + short3 + short4 + char5 + char6 + uint64_7 + uint64_8;
-    for (int i = 0; i < sizeof(buffer); i++)
+    somatudo = int1 + int2 + short3 + short4 + char5 + char6 + uint64_7 + uint64_8;
+    //somatudo = (ull)int1 + (ull)int2 + (ull)short3 + (ull)short4 + (ull)char5 + (ull)char6 + (ull)uint64_7 + (ull)uint64_8;
+    for (i = 0; i < sizeof(buffer); i++)
     {
         somatudo += buffer[i];
     }
@@ -69,16 +107,21 @@ void test_dump_stack()
 
 int test_minlog(int argc, char **argv)
 {
+	int i;
     unsigned char c = ' ';
+    __uint64_t p1,p2,p3,p4,p5,p6,p7;
+    int i1,i2,i3,i4,i5,i6,i7;
+    __uint64_t result = 0x65966596;
+	__uint64_t diffP1Result;
 
-    for (int i = 0x20; i < 0x7f; i++, c++)
+
+    for (i = 0x20; i < 0x7f; i++, c++)
     {
         usleep(1000);
-        MINLOG_ERROR("Message with %d parameters. Valor Decimal %.3d. Valor Hexa 0x%x. Caracter %c. i negativo %d", 5, i, i, c, (-i));
+        MINLOG_ERROR("Message with %d parameters. Decimal %.3d. Hexadecimal 0x%x. Character %c. Negative %d", 5, i, i, c, (-i));
     }
 
 
-    __uint64_t p1,p2,p3,p4,p5,p6,p7;
     p1 = 1;
 #ifdef _MSC_VER
     p2 = 2;
@@ -90,15 +133,14 @@ int test_minlog(int argc, char **argv)
     MINLOG_WARNING("------------------- NOT INITIALIZED VALUES FOR TESTS ---------------------");
 #endif
     p7 = 7;
-    int i1=p1,i2=p2,i3=p3,i4=p4,i5=p5,i6=p6,i7=p7;
+    i1=p1;i2=p2;i3=p3;i4=p4;i5=p5;i6=p6;i7=p7;
 
     minlog(__FILE__, __LINE__, MINLOG_LEVEL_DEBUG,     "Debug with 7 parameters p. p1=%d p2=%d p3=%d p4=%d p5=%d p6=%d p7=%d", 7,p1,p2,p3,p4,p5,p6,p7);
     MINLOG("MINLOG with 7 parameters i. i1=%d i2=%d i3=%d i4=%d i5=%d i6=%d i7=%d", i1,i2,i3,i4,i5,i6,i7);
 
     MINLOG("No parameters.");
 
-    __uint64_t result = 0x65966596;
-    __uint64_t diffP1Result = (__uint64_t)(&p1 - &result);
+	diffP1Result = (__uint64_t)(&p1 - &result);
 
     MINLOG_DEBUG("Stack p1==> [%8.8p]=[%8.8X]", &p1, p1);
     MINLOG_DEBUG("Stack p2==> [%8.8p]=[%8.8X]", &p2, p2);
@@ -131,7 +173,7 @@ int test_minlog(int argc, char **argv)
 void show_log_init(int argc, char** argv)
 {
 #ifdef _MSC_VER
-    MINLOG_INFO("INFO: Windows Aplication");
+    MINLOG_INFO("INFO: Windows Aplication compiled with MSC_VER=%d", _MSC_VER);
 #ifdef _WIN64
     MINLOG_INFO("INFO: compiled in 64bits");
 #elif _WIN32

@@ -8,13 +8,11 @@
 #ifndef INC_MINLOG_H_
 #define INC_MINLOG_H_
 
+typedef void* LOGHANDLE;
 #ifdef _WIN32
 #include <Windows.h>
-#ifdef __cplusplus
-typedef uint64_t __uint64_t;
-#else
 typedef unsigned long long __uint64_t;
-#endif
+typedef unsigned long long ull;
 typedef int pid_t;
 #define usleep(us)  Sleep(us/1000+1)
 #define SPRINTF sprintf_s               // int sprintf_s(char *buffer,size_t sizeOfBuffer,const char *format,...);      // Windows
@@ -22,6 +20,7 @@ typedef int pid_t;
 #define STRCPY(d,s,n)   strcpy_s(d,n,s) // errno_t strcpy_s(   char *dest,   rsize_t dest_size,   const char *src);
 #define vsnprintf   vsprintf_s          // int vsprintf_s(char *buffer, size_t numberOfElements, const char *format, va_list argptr);       // Windows  // int vsnprintf(char* str, size_t size, const char* format, va_list ap);           // Linux
 #define GMTIME(s,d) gmtime_s(d, s)      //errno_t    gmtime_s(struct tm* tmDest, const __time_t * sourceTime);      // Windows
+#define LOCALTIME(s,d) localtime_s(d, s)
 #define getpid	GetCurrentProcessId		// DWORD GetCurrentProcessId();
 #else
 #include <unistd.h>  // for usleep
@@ -29,6 +28,7 @@ typedef int pid_t;
 #define STRCAT(d,s,n)   strncat(d,s,n)  //char *strncat(char *dest, const char *src, size_t n);
 #define STRCPY(d,s,n)   strncpy(d,s,n)  //char *strncpy(char *dest, const char *src, size_t n);
 #define GMTIME(s,d)     gmtime_r(s,d)   //struct tm* gmtime_r(const time_t * timep, struct tm* result);             // Linux
+#define LOCALTIME(s,d)  localtime_r(s,d)
 #endif
 
 
@@ -39,6 +39,12 @@ extern "C" {
 #endif
 
 
+// Types of timestamp used
+#define MINLOG_TIMESTAMP_SECONDS	0
+#define MINLOG_TIMESTAMP_LOCAL		1
+#define MINLOG_TIMESTAMP_GMT		2
+
+// Seven levels of LOGs
 #define MINLOG_LEVEL_TRACE      0
 #define MINLOG_LEVEL_DEBUG      1
 #define MINLOG_LEVEL_INFO       2
@@ -60,10 +66,12 @@ extern "C" {
 #define MINLOG(msg,...) MINLOG_INFO(msg, ##__VA_ARGS__,6596,6596,6596,6596,6596,6596,6596);
 #endif
 
-void *minlog_open(const char *argv_zero, int level, const char *pname_aux);
+void *minlog_open(int level, int timestamp_mode);
+void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, int timestamp_mode);
 void minlog_close(void *);
 int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtmsg, int ctparam, ... );
 int mindump(__uint64_t address, int size);
+
 
 #ifdef __cplusplus
 } /* extern "C" */

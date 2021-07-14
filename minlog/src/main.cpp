@@ -3,6 +3,9 @@
 #include <stdarg.h>
 
 #include "../inc/minlog.h"
+#include <iostream>
+
+using namespace std;
 
 int test_minlog(int argc, char **argv);
 void test_dump_stack();
@@ -10,23 +13,26 @@ void show_log_init(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
-	std::string str(argv[0]);
+    LOGHANDLE log;
+
+	std::string str("Hello World!Lets create a minimal logger for applications writed in CPP!");
 	
-    printf("Hello World! Lets create a minimal logger for applications writed in CPP!\n");
+    cout << str << endl;
 
     if (argc > 1)
     {
-        minlog_open(argv[0], MINLOG_LEVEL_DEBUG, argv[1]);   // Initializing with logfiles
+        log = minlog_file_open(argv[0], MINLOG_LEVEL_DEBUG, argv[1], MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
     }
     else
     {
-        minlog_open(argv[0], MINLOG_LEVEL_DEBUG, NULL);   // Initializing on console
+        log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing on console
     }
 
     show_log_init(argc,argv);
 
     test_dump_stack();
-    //test_minlog(argc,argv);
+    test_minlog(argc,argv);
+    minlog_close(log);
 
     return 0;
 }
@@ -34,6 +40,7 @@ int main(int argc, char **argv)
 #ifdef _WIN32
 #pragma warning (disable: 4244)
 #pragma warning (disable: 4700)
+#pragma warning (disable: 4309)
 //#pragma warning (disable: 4996)
 #endif
 
