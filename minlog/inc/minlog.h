@@ -71,6 +71,7 @@ void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, 
 void minlog_close(void *);
 int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtmsg, int ctparam, ... );
 int mindump(__uint64_t address, int size);
+int minlog_print(const char *pmsg, int size);
 
 
 #ifdef __cplusplus

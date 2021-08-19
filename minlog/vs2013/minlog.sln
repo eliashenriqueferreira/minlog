@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minlogC", "minlogC.vcxproj", "{4CC700D2-0A7A-4328-9DB6-3816A905C307}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minlogCPP", "minlogCPP.vcxproj", "{9FBD43B6-BF1E-48B7-BAA7-0F4DD29A8ABA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clockTest", "clockTest\clockTest.vcxproj", "{E3423F0C-7BF0-4784-B1AA-5FB914039AAB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CC700D2-0A7A-4328-9DB6-3816A905C307}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4CC700D2-0A7A-4328-9DB6-3816A905C307}.Debug|Win32.Build.0 = Debug|Win32
+		{4CC700D2-0A7A-4328-9DB6-3816A905C307}.Release|Win32.ActiveCfg = Release|Win32
+		{4CC700D2-0A7A-4328-9DB6-3816A905C307}.Release|Win32.Build.0 = Release|Win32
+		{9FBD43B6-BF1E-48B7-BAA7-0F4DD29A8ABA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9FBD43B6-BF1E-48B7-BAA7-0F4DD29A8ABA}.Debug|Win32.Build.0 = Debug|Win32
+		{9FBD43B6-BF1E-48B7-BAA7-0F4DD29A8ABA}.Release|Win32.ActiveCfg = Release|Win32
+		{9FBD43B6-BF1E-48B7-BAA7-0F4DD29A8ABA}.Release|Win32.Build.0 = Release|Win32
+		{E3423F0C-7BF0-4784-B1AA-5FB914039AAB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E3423F0C-7BF0-4784-B1AA-5FB914039AAB}.Debug|Win32.Build.0 = Debug|Win32
+		{E3423F0C-7BF0-4784-B1AA-5FB914039AAB}.Release|Win32.ActiveCfg = Release|Win32
+		{E3423F0C-7BF0-4784-B1AA-5FB914039AAB}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

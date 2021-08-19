@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>     // for memset
 
-#include "../inc/minlog.h"
+#include "minlog.h"
 
 #ifdef __GNUC__
 //#pragma GCC diagnostic [warning|error|ignored] OPTION
@@ -61,7 +61,7 @@ char* GetEnv(char *name)
 #endif
 }
 
-#if ( _MSC_VER < 1800 )
+#if ( _MSC_VER < 1900 )
 #ifndef _CRT_NO_TIME_T
     struct timespec
     {
@@ -161,14 +161,23 @@ char* getTimeStamp(char* pbuf, size_t buflen)
 
 #endif
 
+void minlog_force_open(int level, int timestamp_mode)
+{
+  if (pminlog == NULL) {
+    minlog_open(level, timestamp_mode);
+  }
+}
 
 void* minlog_open(int level, int timestamp_mode)
 {
     time_t rawtime;
 
+    if (pminlog != NULL) {
+      return pminlog;
+    }
+
     time (&rawtime);
 
-    assert(pminlog == NULL);
     pminlog = (minlog_t*)malloc(sizeof(struct minlog_st));
     assert(pminlog != NULL);
 
@@ -187,6 +196,8 @@ void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, 
 	char *ppath;
 	pid_t pid;
 	int log_id;
+
+    if (pminlog == NULL) return 0;
 
 	pminlog = (minlog_t *)minlog_open(level, timestamp_mode);
 
@@ -262,12 +273,12 @@ int minlogfile(char *filepath, char *buffer)
 
 int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtmsg, int ctparam, ...)
 {
-    char msgbuffer[250];
+    char msgbuffer[4096];
     char tsbuffer[40];
     char *ptimestamp;
 	va_list args;
 
-    assert(pminlog != NULL);
+    if (pminlog == NULL) return 0;
 
     if (pminlog->level > level)
     {
@@ -295,6 +306,42 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
 	return 0;
 }
 
+#define MINLOG_MAXBUF  2048
+int minlog_print(const char *pmsg, int size)
+{
+  char msg_buffer[MINLOG_MAXBUF+1];
+  int tam = 0;
+
+  if (pminlog == NULL) return 0;
+
+  while (tam < size && tam < MINLOG_MAXBUF)
+  {
+    if (*pmsg >= ' ' && *pmsg <= '~')
+    {
+      msg_buffer[tam] = *pmsg;
+    }
+    else
+    {
+      // Especial Char
+      msg_buffer[tam] = '~';
+    }
+    tam++;
+    pmsg++;
+  }
+  msg_buffer[tam] = '\0';
+
+  if (pminlog->log_file_path[0])
+  {
+    minlogfile(pminlog->log_file_path, msg_buffer);
+  }
+  else
+  {
+    // Output to console
+    printf("%s\n", msg_buffer);
+  }
+  return tam;
+}
+
 int mindump(__uint64_t address, int size)
 {
 	int c = 0;
@@ -302,6 +349,8 @@ int mindump(__uint64_t address, int size)
 	char line_buffer[1024];
 	char charset[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	unsigned char* pmem = (unsigned char *)address;
+
+  if (pminlog == NULL) return 0;
 
 	SPRINTF(line_buffer, sizeof(line_buffer), "[%p] %+3.3d ", pmem, size);
 	// 01234567  . 
