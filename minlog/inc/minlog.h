@@ -38,11 +38,14 @@ typedef int pid_t;
 extern "C" {
 #endif
 
+#define MINLOG_MAXBUF           4096
+#define MINLOG_MAXHDRBIN        150     // Max binary header lenght to print in console
 
 // Types of timestamp used
 #define MINLOG_TIMESTAMP_SECONDS	0
 #define MINLOG_TIMESTAMP_LOCAL		1
-#define MINLOG_TIMESTAMP_GMT		2
+#define MINLOG_TIMESTAMP_GMT		  2
+#define MINLOG_TIMESTAMP_LITTLE		3
 
 // Seven levels of LOGs
 #define MINLOG_LEVEL_TRACE      0

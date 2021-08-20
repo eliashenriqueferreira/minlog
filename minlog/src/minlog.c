@@ -24,15 +24,20 @@
 #pragma GCC diagnostic warning "-Wformat=0"
 #endif
 
+int minlogfile(char *filepath, char *buffer);
+
 // Levels of Identification - Trace, Debug, Info, Warning, Error, Critical, Off
 char minlog_level_char[] = {'T','D','I','W','E','C','O'};
 
+char charset[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+
 typedef struct minlog_st
 {
-        int level;
-        int timestamp_mode;
+    int level;
+    int timestamp_mode;
 		time_t start_timestamp_seconds;
-        char log_file_path[FILENAME_MAX];   // 4096 for linux
+    char log_file_path[FILENAME_MAX];   // 4096 for linux
 		char aux_buffer[1024];				// Aux Buffer to be used by thread.
 } minlog_t;
 minlog_t *pminlog = NULL;
@@ -75,11 +80,11 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     char buf_aux[40];
     time_t rawtime;
     struct tm tmGMT;
-	SYSTEMTIME st;
+	  SYSTEMTIME st;
 
     time (&rawtime);
-	tms.tv_sec = rawtime;
-	tms.tv_nsec = 0;
+	  tms.tv_sec = rawtime;
+	  tms.tv_nsec = 0;
 
     if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_GMT) 
     {
@@ -87,21 +92,28 @@ char* getTimeStamp(char* pbuf, size_t buflen)
         //errno_t    gmtime_s(struct tm* tmDest, const __time_t * sourceTime);		// Windows
         //struct tm* gmtime_r(const time_t * timep, struct tm* result);				// Linux
         strftime(buf_aux, 40, "[GMT %Y-%m-%d %H:%M:%S.%%.3ld]", &tmGMT);	// Build %.3ld from the format part %%.3ld
-		GetSystemTime(&st);		// struct tm does not have miliseconds
-		SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
+		    GetSystemTime(&st);		// struct tm does not have miliseconds
+		    SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
     }
     else if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_LOCAL)
     {
         LOCALTIME(&rawtime, &tmGMT);
         strftime(buf_aux, 40, "[LOC %Y-%m-%d %H:%M:%S.%%.3ld]", &tmGMT);	// Build %.3ld from the format part %%.3ld
-		GetSystemTime(&st);		// struct tm does not have miliseconds
+        GetSystemTime(&st);		// struct tm does not have miliseconds
         SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
+    }
+    else if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_LITTLE)
+    {
+        LOCALTIME(&rawtime, &tmGMT);
+        strftime(buf_aux, 40, "[%m%d %H:%M:%S.%%.2ld]", &tmGMT);	
+        GetSystemTime(&st);		// struct tm does not have miliseconds
+        SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds / 10);
     }
     else
     {
-		SPRINTF(buf_aux, sizeof(buf_aux), "[UPTIME:%.12ld.%%.3ld]", tms.tv_sec - pminlog->start_timestamp_seconds);
-		GetSystemTime(&st);
-		SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
+		    SPRINTF(buf_aux, sizeof(buf_aux), "[UPTIME:%.12ld.%%.3ld]", tms.tv_sec - pminlog->start_timestamp_seconds);
+		    GetSystemTime(&st);
+		    SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
     }
 
     return pbuf;
@@ -161,11 +173,52 @@ char* getTimeStamp(char* pbuf, size_t buflen)
 
 #endif
 
+void presentation()
+{
+    char ch = ' ';
+    char line_init[] = "...................................................... MINLOG PRINTABLE CHARS .......................................................................";
+    char line_fina[] = ".....................................................................................................................................................";
+    char line_char[128];
+    char line_nibleH[128];
+    char line_nibleL[128];
+    int i = 0;
+
+    // 126      176    07E   01111110        ~    (tilde)
+    while (ch <= '~') {
+        line_char[i] = ch;
+        line_nibleH[i] = charset[ch / 16];
+        line_nibleL[i] = charset[ch % 16];
+        i++;
+        ch++;
+    }
+    line_char[i] = '\0';
+    line_nibleH[i] = '\0';
+    line_nibleL[i] = '\0';
+
+
+    if (pminlog->log_file_path[0])
+    {
+        minlogfile(pminlog->log_file_path, line_init);
+        minlogfile(pminlog->log_file_path, line_char);
+        minlogfile(pminlog->log_file_path, line_nibleH);
+        minlogfile(pminlog->log_file_path, line_nibleL);
+        minlogfile(pminlog->log_file_path, line_fina);
+    }
+    else
+    {
+        printf("%s\n", line_init);
+        printf("%s\n", line_char);
+        printf("%s\n", line_nibleH);
+        printf("%s\n", line_nibleL);
+        printf("%s\n", line_fina);
+    }
+}
+
 void minlog_force_open(int level, int timestamp_mode)
 {
-  if (pminlog == NULL) {
-    minlog_open(level, timestamp_mode);
-  }
+    if (pminlog == NULL) {
+        minlog_open(level, timestamp_mode);
+    }
 }
 
 void* minlog_open(int level, int timestamp_mode)
@@ -183,23 +236,26 @@ void* minlog_open(int level, int timestamp_mode)
 
     memset(pminlog->log_file_path, 0, sizeof(pminlog->log_file_path));
 
-	pminlog->start_timestamp_seconds = rawtime;
+	  pminlog->start_timestamp_seconds = rawtime;
     pminlog->level = level;
     pminlog->timestamp_mode = timestamp_mode;
+
+    presentation();
+
     return pminlog;
 }
 
 void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, int timestamp_mode)
 {
-	const char *filename_only;
-	int v0_len;
-	char *ppath;
-	pid_t pid;
-	int log_id;
+	  const char *filename_only;
+	  int v0_len;
+	  char *ppath;
+	  pid_t pid;
+	  int log_id;
 
     if (pminlog == NULL) return 0;
 
-	pminlog = (minlog_t *)minlog_open(level, timestamp_mode);
+	  pminlog = (minlog_t *)minlog_open(level, timestamp_mode);
 
     filename_only = strrchr(argv_zero, '/') + 1;
 
@@ -242,6 +298,8 @@ void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, 
         STRCAT(pminlog->log_file_path, ".log",4);
     }
 
+    presentation();
+
     return pminlog;
 }
 
@@ -259,9 +317,9 @@ int minlogfile(char *filepath, char *buffer)
     FILE *pfl;
 
 #ifdef _WIN32
-	fopen_s(&pfl, filepath, "a");
+	  fopen_s(&pfl, filepath, "a");
 #else
-	pfl = fopen(filepath, "a");
+	  pfl = fopen(filepath, "a");
 #endif
 
     fputs(buffer, pfl);
@@ -276,7 +334,7 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
     char msgbuffer[4096];
     char tsbuffer[40];
     char *ptimestamp;
-	va_list args;
+	  va_list args;
 
     if (pminlog == NULL) return 0;
 
@@ -285,7 +343,7 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
         return 0;
     }
 
-	ptimestamp = getTimeStamp(tsbuffer, sizeof(tsbuffer));
+	  ptimestamp = getTimeStamp(tsbuffer, sizeof(tsbuffer));
 
     va_start(args, ctparam);
     vsnprintf(msgbuffer, sizeof(msgbuffer), pfmtmsg, args);
@@ -306,38 +364,61 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
 	return 0;
 }
 
-#define MINLOG_MAXBUF  2048
-int minlog_print(const char *pmsg, int size)
+int minlog_print(const char *pmesg, int size)
 {
-  char msg_buffer[MINLOG_MAXBUF+1];
+  char msg_buffer[MINLOG_MAXBUF + 1];
+  char msg_nibleH[MINLOG_MAXBUF + 1];
+  char msg_nibleL[MINLOG_MAXBUF + 1];
+  const unsigned char* pmem = (unsigned char *)pmesg;
   int tam = 0;
+  int header_info = 0;
 
   if (pminlog == NULL) return 0;
 
   while (tam < size && tam < MINLOG_MAXBUF)
   {
-    if (*pmsg >= ' ' && *pmsg <= '~')
+    if (*pmem >= ' ' && *pmem <= '~')
     {
-      msg_buffer[tam] = *pmsg;
+      // Put printable char in the first line
+      msg_buffer[tam] = *pmem;
+      msg_nibleH[tam] = ' ';
+      msg_nibleL[tam] = ' ';
     }
     else
     {
-      // Especial Char
+      // Especial Char in first line
       msg_buffer[tam] = '~';
+      msg_nibleH[tam] = charset[(*pmem) / 16];
+      msg_nibleL[tam] = charset[(*pmem) % 16];
+      if (tam < MINLOG_MAXHDRBIN) header_info++;
     }
     tam++;
-    pmsg++;
+    pmem++;
   }
   msg_buffer[tam] = '\0';
+  msg_nibleH[tam] = '\0';
+  msg_nibleL[tam] = '\0';
 
   if (pminlog->log_file_path[0])
   {
     minlogfile(pminlog->log_file_path, msg_buffer);
+    if (header_info > 0) {
+      minlogfile(pminlog->log_file_path, msg_nibleH);
+      minlogfile(pminlog->log_file_path, msg_nibleL);
+    }
   }
   else
   {
     // Output to console
     printf("%s\n", msg_buffer);
+    if (header_info > 0) {
+      // Ensuring that at least a certain amount of binary information can be consulted in poor console
+      msg_nibleH[MINLOG_MAXHDRBIN] = '\0';
+      msg_nibleL[MINLOG_MAXHDRBIN] = '\0';
+
+      printf("%s\n", msg_nibleH);
+      printf("%s\n", msg_nibleL);
+    }
   }
   return tam;
 }
@@ -347,7 +428,6 @@ int mindump(__uint64_t address, int size)
 	int c = 0;
 	int indx = 0;
 	char line_buffer[1024];
-	char charset[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	unsigned char* pmem = (unsigned char *)address;
 
   if (pminlog == NULL) return 0;
