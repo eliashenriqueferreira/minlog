@@ -24,20 +24,32 @@
 #pragma GCC diagnostic warning "-Wformat=0"
 #endif
 
-int minlogfile(char *filepath, char *buffer);
+int minlog_out(char *buffer);
 
-// Levels of Identification - Trace, Debug, Info, Warning, Error, Critical, Off
-char minlog_level_char[] = {'T','D','I','W','E','C','O'};
+// Levels of Identification - Trace, Debug, Error, Critical, Warning, Info, Always
+char minlog_level_char[] = {'T','D','E','C','W','I','A'};
+/*
+#define MINLOG_LEVEL_TRACE      0
+#define MINLOG_LEVEL_DEBUG      1
+#define MINLOG_LEVEL_ERROR      2
+#define MINLOG_LEVEL_CRITICAL   3
+#define MINLOG_LEVEL_WARNING    4
+#define MINLOG_LEVEL_INFO       5
+#define MINLOG_LEVEL_ALWAYS     6
+*/
 
 char charset[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 
 typedef struct minlog_st
 {
-    int level;
+    int minlevel;
     int timestamp_mode;
+    int outconsole;
+    int outfile;
+    int level_msg;
 		time_t start_timestamp_seconds;
-    char log_file_path[FILENAME_MAX];   // 4096 for linux
+    char log_file_path[4096];   // 4096 for linux    
 		char aux_buffer[1024];				// Aux Buffer to be used by thread.
 } minlog_t;
 minlog_t *pminlog = NULL;
@@ -173,10 +185,10 @@ char* getTimeStamp(char* pbuf, size_t buflen)
 
 #endif
 
-void presentation()
+void presentation_debug()
 {
     char ch = ' ';
-    char line_init[] = "...................................................... MINLOG PRINTABLE CHARS .......................................................................";
+    char line_init[] = "...................................................... MINLOG DEBUG - PRINTABLE CHARS ...............................................................";
     char line_fina[] = ".....................................................................................................................................................";
     char line_char[128];
     char line_nibleH[128];
@@ -195,23 +207,28 @@ void presentation()
     line_nibleH[i] = '\0';
     line_nibleL[i] = '\0';
 
+    pminlog->level_msg = MINLOG_LEVEL_ALWAYS;
+    minlog_out(line_init);
+    minlog_out(line_char);
+    minlog_out(line_nibleH);
+    minlog_out(line_nibleL);
+    minlog_out(line_fina);
+    }
 
-    if (pminlog->log_file_path[0])
+void presentation()
     {
-        minlogfile(pminlog->log_file_path, line_init);
-        minlogfile(pminlog->log_file_path, line_char);
-        minlogfile(pminlog->log_file_path, line_nibleH);
-        minlogfile(pminlog->log_file_path, line_nibleL);
-        minlogfile(pminlog->log_file_path, line_fina);
+    char line_init[MINLOG_MAXBUF];
+
+    switch (pminlog->minlevel) {
+    case MINLOG_LEVEL_INFO: SPRINTF(line_init, sizeof(line_init), "...................................................... MINLOG to MINLOG_LEVEL_INFO(%d) ...............................................................", pminlog->minlevel); break;
+    case MINLOG_LEVEL_CRITICAL: SPRINTF(line_init, sizeof(line_init), "...................................................... MINLOG to MINLOG_LEVEL_CRITICAL(%d) ...............................................................", pminlog->minlevel); break;
+    case MINLOG_LEVEL_ERROR: SPRINTF(line_init, sizeof(line_init), "...................................................... MINLOG to MINLOG_LEVEL_ERROR(%d) ...............................................................", pminlog->minlevel); break;
+    case MINLOG_LEVEL_WARNING: SPRINTF(line_init, sizeof(line_init), "...................................................... MINLOG to MINLOG_LEVEL_INFO(%d) ...............................................................", pminlog->minlevel); break;
     }
-    else
-    {
-        printf("%s\n", line_init);
-        printf("%s\n", line_char);
-        printf("%s\n", line_nibleH);
-        printf("%s\n", line_nibleL);
-        printf("%s\n", line_fina);
-    }
+
+    pminlog->level_msg = MINLOG_LEVEL_ALWAYS;
+
+    minlog_out(line_init);
 }
 
 void minlog_force_open(int level, int timestamp_mode)
@@ -237,15 +254,13 @@ void* minlog_open(int level, int timestamp_mode)
     memset(pminlog->log_file_path, 0, sizeof(pminlog->log_file_path));
 
 	  pminlog->start_timestamp_seconds = rawtime;
-    pminlog->level = level;
+    pminlog->minlevel = level;
     pminlog->timestamp_mode = timestamp_mode;
-
-    presentation();
 
     return pminlog;
 }
 
-void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, int timestamp_mode)
+void *minlog_file_open(int argc, char *argv[], int level, int timestamp_mode)
 {
 	  const char *filename_only;
 	  int v0_len;
@@ -253,52 +268,106 @@ void *minlog_file_open(const char *argv_zero, int level, const char *pname_aux, 
 	  pid_t pid;
 	  int log_id;
 
-    if (pminlog == NULL) return 0;
+
+    if (pminlog != NULL) return 0;
+
 
 	  pminlog = (minlog_t *)minlog_open(level, timestamp_mode);
 
-    filename_only = strrchr(argv_zero, '/') + 1;
+    // In Argv[1] will be the level of output console.
+    if (argc > 1) {
+      pminlog->outconsole = atoi(argv[1]);
+    }
+    else
+    {
+      pminlog->outconsole = MINLOG_LEVEL_OFF;
+    }
+    // In Argv[2] will be the level of output for files.
+    if (argc > 2) {
+      pminlog->outfile = atoi(argv[2]);
+    }
+    else
+    {
+      pminlog->outfile = MINLOG_LEVEL_OFF;
+    }
 
-    v0_len = (int)strlen(argv_zero);
+    // Forces others to the minimal level
+    if (pminlog->outconsole != MINLOG_LEVEL_OFF) {
+      if (pminlog->minlevel > pminlog->outconsole) {
+        pminlog->minlevel = pminlog->outconsole;
+      }
+      else {
+        pminlog->outconsole = pminlog->minlevel;
+      }
+    }
+    // Forces others to the minimal level
+    if (pminlog->outfile != MINLOG_LEVEL_OFF) {
+      if (pminlog->minlevel > pminlog->outfile) {
+        pminlog->minlevel = pminlog->outfile;
+      }
+      else {
+        pminlog->outfile = pminlog->minlevel;
+      }
+    }
+    else {
+      // No Necessity build log file path
+      return 0;
+    }
+
+
+    // TODO - Need to make compatibility with forward slash
+    filename_only = strrchr(argv[0], '\\') + 1;
+
+    v0_len = (int)strlen(argv[0]);
 
     // Initializing File Path
+    if (argc > 3) 
+    {
+        // Path of log directory by command line
+        ppath = argv[3];
+    }
+    else
+    {
+      // Path of log directory by Environment variable
     ppath = GetEnv("MINLOG_LOGDIR");
+    }
 
-    if (pname_aux)      // For log on files
+    // For log on files
     {
         char buf_value[50];
 
+        memset(pminlog->log_file_path, 0, sizeof(pminlog->log_file_path));
 
         if (ppath)
         {
             STRCPY(pminlog->log_file_path, ppath, strlen(ppath));
-            STRCAT(pminlog->log_file_path, "/", 1);
+            STRCAT(pminlog->log_file_path, "\\", 1);
             STRCAT(pminlog->log_file_path, filename_only, strlen(filename_only));
         }
         else
         {
-            STRCPY(pminlog->log_file_path, argv_zero, v0_len);
+            STRCPY(pminlog->log_file_path, argv[0], v0_len);
+            //strcpy(pminlog->log_file_path, argv_zero);
         }
-
-        if (pname_aux[0])
-        {
-            STRCAT(pminlog->log_file_path, "_", 1);
-            STRCAT(pminlog->log_file_path, pname_aux, strlen(pname_aux));
-        }
-
 
         STRCAT(pminlog->log_file_path, "_", 1);
         pid = getpid();
         SPRINTF(buf_value,sizeof(buf_value),"%6.6d", pid);
         STRCAT(pminlog->log_file_path, buf_value, sizeof(buf_value));
-        STRCAT(pminlog->log_file_path, "_",1);
-        log_id = unique_log_id++;
-        SPRINTF(buf_value, sizeof(buf_value), "%4.4d", log_id);
-        STRCAT(pminlog->log_file_path, buf_value, sizeof(buf_value));
-        STRCAT(pminlog->log_file_path, ".log",4);
+        //STRCAT(pminlog->log_file_path, "_",1);
+        //log_id = unique_log_id++;
+        //SPRINTF(buf_value, sizeof(buf_value), "%4.4d", log_id);
+        //STRCAT(pminlog->log_file_path, buf_value, sizeof(buf_value));
+        STRCAT(pminlog->log_file_path, ".min",4);
     }
 
+    if (pminlog->minlevel == MINLOG_LEVEL_DEBUG) {
+      presentation_debug();
+    }
+    else {
     presentation();
+    }
+
 
     return pminlog;
 }
@@ -312,36 +381,51 @@ void minlog_close(void *pref)
 }
 
 // Output to a file previosly defined
-int minlogfile(char *filepath, char *buffer)
+int minlog_out(char *buffer)
 {
+  // I'm warranty that trace level will be exhibited forever MINLOG_LEVEL_TRACE = 0
+  if ((pminlog->level_msg >= pminlog->outconsole)) {
+    //printf("%s",buffer);
+    puts(buffer);
+  }
+  if ((pminlog->level_msg >= pminlog->outfile)) {
     FILE *pfl;
+    errno_t err;
 
 #ifdef _WIN32
-	  fopen_s(&pfl, filepath, "a");
+    while ((err = fopen_s(&pfl, pminlog->log_file_path, "a")) != 0) {
+      fprintf(stderr, "MINLOG RUNTIME ERROR:[%s]\n", strerror(err));
+      Sleep(500);
+    }
+    fprintf(pfl, "%s\n", buffer);
+    //fputs(buffer, pfl);
 #else
-	  pfl = fopen(filepath, "a");
+    pfl = fopen(pminlog->log_file_path, "a");
+    fprintf(pfl, "%s\n", buffer);
+    //fputs(buffer, pfl);
 #endif
 
-    fputs(buffer, pfl);
-
     fclose(pfl);
+  }
 
 	return 0;
 }
 
 int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtmsg, int ctparam, ...)
 {
-    char msgbuffer[4096];
+    char file_buffer[MINLOG_MAXBUF];
+    char msgbuffer[MINLOG_MAXBUF];
     char tsbuffer[40];
     char *ptimestamp;
 	  va_list args;
 
     if (pminlog == NULL) return 0;
 
-    if (pminlog->level > level)
-    {
+    if (level < pminlog->minlevel) {
         return 0;
     }
+    pminlog->level_msg = level;
+
 
 	  ptimestamp = getTimeStamp(tsbuffer, sizeof(tsbuffer));
 
@@ -349,33 +433,26 @@ int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtm
     vsnprintf(msgbuffer, sizeof(msgbuffer), pfmtmsg, args);
     va_end(args);
 
-    if (pminlog->log_file_path[0])
-    {
-        char file_buffer[512];
-        SPRINTF(file_buffer,sizeof(file_buffer), "%s[%c]{%s}[%d][%s]\n", ptimestamp, minlog_level_char[level], msgbuffer, sourceline, psourcefile );
-        minlogfile(pminlog->log_file_path, file_buffer);
-    }
-    else
-    {
-        // Output to console
-        printf("%s[%c]{%s}[%d][%s]\n", ptimestamp, minlog_level_char[level], msgbuffer, sourceline, psourcefile );
-    }
+    SPRINTF(file_buffer,sizeof(file_buffer), "%s[%c]{%s}[%d][%s]", ptimestamp, minlog_level_char[level], msgbuffer, sourceline, psourcefile );
+    minlog_out(file_buffer);
 
 	return 0;
 }
 
 int minlog_print(const char *pmesg, int size)
 {
-  char msg_buffer[MINLOG_MAXBUF + 1];
-  char msg_nibleH[MINLOG_MAXBUF + 1];
-  char msg_nibleL[MINLOG_MAXBUF + 1];
+  char msg_buffer[MINLOG_MAXBUF];
+  char msg_nibleH[MINLOG_MAXBUF];
+  char msg_nibleL[MINLOG_MAXBUF];
   const unsigned char* pmem = (unsigned char *)pmesg;
   int tam = 0;
   int header_info = 0;
 
   if (pminlog == NULL) return 0;
 
-  while (tam < size && tam < MINLOG_MAXBUF)
+  pminlog->level_msg = MINLOG_LEVEL_DEBUG;
+
+  while (tam < size && tam < (MINLOG_MAXBUF-1))
   {
     if (*pmem >= ' ' && *pmem <= '~')
     {
@@ -399,27 +476,22 @@ int minlog_print(const char *pmesg, int size)
   msg_nibleH[tam] = '\0';
   msg_nibleL[tam] = '\0';
 
-  if (pminlog->log_file_path[0])
-  {
-    minlogfile(pminlog->log_file_path, msg_buffer);
+  minlog_out(msg_buffer);
     if (header_info > 0) {
-      minlogfile(pminlog->log_file_path, msg_nibleH);
-      minlogfile(pminlog->log_file_path, msg_nibleL);
+    minlog_out(msg_nibleH);
+    minlog_out(msg_nibleL);
     }
-  }
-  else
-  {
-    // Output to console
-    printf("%s\n", msg_buffer);
-    if (header_info > 0) {
-      // Ensuring that at least a certain amount of binary information can be consulted in poor console
-      msg_nibleH[MINLOG_MAXHDRBIN] = '\0';
-      msg_nibleL[MINLOG_MAXHDRBIN] = '\0';
 
-      printf("%s\n", msg_nibleH);
-      printf("%s\n", msg_nibleL);
-    }
-  }
+  //// Output to console
+  //printf("%s\n", msg_buffer);
+  //if (header_info > 0) {
+  //  // Ensuring that at least a certain amount of binary information can be consulted in poor console
+  //  msg_nibleH[MINLOG_MAXHDRBIN] = '\0';
+  //  msg_nibleL[MINLOG_MAXHDRBIN] = '\0';
+
+  //  printf("%s\n", msg_nibleH);
+  //  printf("%s\n", msg_nibleL);
+  //}
   return tam;
 }
 
@@ -457,16 +529,7 @@ int mindump(__uint64_t address, int size)
 	}
 	line_buffer[c] = '\0';
 
-
-	if (pminlog->log_file_path[0])
-	{
-		minlogfile(pminlog->log_file_path, line_buffer);
-	}
-	else
-	{
-		// Output to console
-		printf("%s\n", line_buffer);
-	}
+  minlog_out(line_buffer);
 	return 0;
 }
 
