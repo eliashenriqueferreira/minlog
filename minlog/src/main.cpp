@@ -15,18 +15,21 @@ int main(int argc, char **argv)
 {
     LOGHANDLE log;
 
-	std::string str("Hello World!Lets create a minimal logger for applications writed in CPP!");
+	std::string str("Hello World! Lets create a minimal logger for applications writed in CPP!");
 	
     cout << str << endl;
 
-    if (argc > 1)
-    {
-        log = minlog_file_open(argc, argv, MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
-    }
-    else
-    {
-        log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing on console
-    }
+	
+	log = minlog_file_open(MINLOG_LEVEL_INFO, MINLOG_LEVEL_INFO, MINLOG_TIMESTAMP_GMT);
+
+    //if (argc > 1)
+    //{
+    //    log = minlog_file_open(argc, argv, MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
+    //}
+    //else
+    //{
+    //    log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing on console
+    //}
 
     show_log_init(argc,argv);
 

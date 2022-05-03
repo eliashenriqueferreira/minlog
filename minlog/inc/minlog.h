@@ -55,6 +55,7 @@ extern "C" {
 #define MINLOG_TIMESTAMP_LITTLE		3
 
 // Seven levels of Message LOGs
+#define MINLOG_LEVEL_OFF        (-1)
 #define MINLOG_LEVEL_TRACE      0
 #define MINLOG_LEVEL_DEBUG      1
 #define MINLOG_LEVEL_ERROR      2
@@ -62,7 +63,6 @@ extern "C" {
 #define MINLOG_LEVEL_WARNING    4
 #define MINLOG_LEVEL_INFO       5
 #define MINLOG_LEVEL_ALWAYS     6
-#define MINLOG_LEVEL_OFF        99
 
 #define MINLOG_TRACE(msg,...)    minlog(__FILE__, __LINE__, MINLOG_LEVEL_TRACE,    msg, 7, ##__VA_ARGS__, 6596, 6596, 6596, 6596, 6596, 6596, 6596);
 #define MINLOG_DEBUG(msg,...)    minlog(__FILE__, __LINE__, MINLOG_LEVEL_DEBUG,    msg, 7, ##__VA_ARGS__, 6596, 6596, 6596, 6596, 6596, 6596, 6596);
@@ -77,8 +77,8 @@ extern "C" {
 #define MINLOG(msg,...) MINLOG_INFO(msg, ##__VA_ARGS__,6596,6596,6596,6596,6596,6596,6596);
 #endif
 
-void *minlog_open(int level, int timestamp_mode);
-void *minlog_file_open(int argc, char *argv[], int level, int timestamp_mode);
+void *minlog_open(int timestamp_mode);
+void* minlog_file_open(int outconsole, int outfile, int timestamp_mode);
 void minlog_close(void *);
 int minlog(const char *psourcefile, int sourceline, int level, const char *pfmtmsg, int ctparam, ... );
 int mindump(__uint64_t address, int size);
