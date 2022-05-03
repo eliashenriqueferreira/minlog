@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 
     if (argc > 1)
     {
-        log = minlog_file_open(argv[0], MINLOG_LEVEL_DEBUG, argv[1], MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
+        log = minlog_file_open(argc, argv, MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
     }
     else
     {
@@ -51,7 +51,7 @@ void test_dump_stack()
     short short3 = 0x3333;
     short short4 = 0x4444;
     unsigned char char5 = 0x55;
-    char buffer[] = { 0xbf,15,15,15,15,15,15,15,15,15,15,15,15,15,0xbf };
+    unsigned char buffer[] = { 0xbf,15,15,15,15,15,15,15,15,15,15,15,15,15,0xbf };
     unsigned char char6 = 0x66;
     __uint64_t uint64_7 = 0x7777777777777777;
     __uint64_t uint64_8 = 0x8888888888888888;
