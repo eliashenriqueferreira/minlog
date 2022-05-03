@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>     // for memset
 
-#include "minlog.h"
+#include "../inc/minlog.h"
 
 #ifdef __GNUC__
 //#pragma GCC diagnostic [warning|error|ignored] OPTION
@@ -78,7 +78,15 @@ char* GetEnv(char *name)
 #endif
 }
 
+#define __VSOLD__  0
+
+#ifdef _MSC_VER
 #if ( _MSC_VER < 1900 )
+#define __VSOLD__ 1
+#endif
+#endif 
+
+#if ( __VSOLD__ )
 #ifndef _CRT_NO_TIME_T
     struct timespec
     {
@@ -391,10 +399,11 @@ int minlog_out(char *buffer)
   if ((pminlog->level_msg >= pminlog->outfile)) {
     FILE *pfl;
     errno_t err;
+	char bufferr[1024];
 
 #ifdef _WIN32
     while ((err = fopen_s(&pfl, pminlog->log_file_path, "a")) != 0) {
-      fprintf(stderr, "MINLOG RUNTIME ERROR:[%s]\n", strerror(err));
+      fprintf(stderr, "MINLOG RUNTIME ERROR:[%s]\n", strerror_s(bufferr, sizeof(bufferr),err));
       Sleep(500);
     }
     fprintf(pfl, "%s\n", buffer);
