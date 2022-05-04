@@ -101,11 +101,11 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     char buf_aux[40];
     time_t rawtime;
     struct tm tmGMT;
-	  SYSTEMTIME st;
+	SYSTEMTIME st;
 
     time (&rawtime);
-	  tms.tv_sec = rawtime;
-	  tms.tv_nsec = 0;
+	tms.tv_sec = rawtime;
+	tms.tv_nsec = 0;
 
     if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_GMT) 
     {
@@ -113,8 +113,8 @@ char* getTimeStamp(char* pbuf, size_t buflen)
         //errno_t    gmtime_s(struct tm* tmDest, const __time_t * sourceTime);		// Windows
         //struct tm* gmtime_r(const time_t * timep, struct tm* result);				// Linux
         strftime(buf_aux, 40, "[GMT %Y-%m-%d %H:%M:%S.%%.3ld]", &tmGMT);	// Build %.3ld from the format part %%.3ld
-		    GetSystemTime(&st);		// struct tm does not have miliseconds
-		    SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
+		GetSystemTime(&st);		// struct tm does not have miliseconds
+		SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
     }
     else if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_LOCAL)
     {
@@ -132,9 +132,9 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     }
     else
     {
-		    SPRINTF(buf_aux, sizeof(buf_aux), "[UPTIME:%.12ld.%%.3ld]", tms.tv_sec - pminlog->start_timestamp_seconds);
-		    GetSystemTime(&st);
-		    SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
+		SPRINTF(buf_aux, sizeof(buf_aux), "[UPTIME:%.12ld.%%.3ld]", tms.tv_sec - pminlog->start_timestamp_seconds);
+		GetSystemTime(&st);
+		SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
     }
 
     return pbuf;
@@ -183,10 +183,11 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     }
     else
     {
-        SYSTEMTIME st;
-        SPRINTF(buf_aux, sizeof(buf_aux), "[UPTIME:%.12ld.%%.3ld]", (long)(tms.tv_sec - pminlog->start_timestamp_seconds));
-        GetSystemTime(&st);
-        SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
+        //// EHF_TODO - This does not work for GCC compiler
+        //SYSTEMTIME st;
+        //SPRINTF(buf_aux, sizeof(buf_aux), "[UPTIME:%.12ld.%%.3ld]", (long)(tms.tv_sec - pminlog->start_timestamp_seconds));
+        //GetSystemTime(&st);
+        //SPRINTF(pbuf, buflen, buf_aux, st.wMilliseconds);
     }
 
     return pbuf;
@@ -380,10 +381,11 @@ int minlog_out(char *buffer)
   }
   if ((pminlog->level_msg <= pminlog->outfile)) {
     FILE *pfl;
-    errno_t err;
 	char bufferr[1024];
 
 #ifdef _WIN32
+    errno_t err;
+
     while ((err = fopen_s(&pfl, pminlog->log_file_path, "a")) != 0) {
         strerror_s(bufferr, sizeof(bufferr), err);
         fprintf(stderr, "MINLOG RUNTIME ERROR opening log file: %d-[%s]\n", err, bufferr);

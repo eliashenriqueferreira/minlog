@@ -21,7 +21,8 @@ typedef int pid_t;
 #define STRCAT(d,s,n)   strcat(d,s)
 #define STRCPY(d,s,n)   strcpy(d,s)
 #else
-#define STRCAT(d,s,n)   strcat_s(d,n,s) // errno_t strcat_s(char *strDestination, size_t numberOfElements, const char *strSource);
+// https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/strcat-s-wcscat-s-mbscat-s?view=msvc-170
+#define STRCAT(d,s,n)   strcat_s(d,n,s) // n is the total destination buffer lenght
 #define STRCPY(d,s,n)   strcpy_s(d,n,s) // errno_t strcpy_s(   char *dest,   rsize_t dest_size,   const char *src);
 #endif
 
@@ -32,7 +33,8 @@ typedef int pid_t;
 #else
 #include <unistd.h>  // for usleep
 #define SPRINTF snprintf                //int snprintf(char *str, size_t size, const char *format, ...);
-#define STRCAT(d,s,n)   strncat(d,s,n)  //char *strncat(char *dest, const char *src, size_t n);
+// https://linux.die.net/man/3/strncat  // Therefore, the size of dest must be at least strlen(dest)+n+1.
+#define STRCAT(d,s,n)   strncat(d,s,n+1)  //char *strncat(char *dest, const char *src, size_t n);
 #define STRCPY(d,s,n)   strncpy(d,s,n)  //char *strncpy(char *dest, const char *src, size_t n);
 #define GMTIME(s,d)     gmtime_r(s,d)   //struct tm* gmtime_r(const time_t * timep, struct tm* result);             // Linux
 #define LOCALTIME(s,d)  localtime_r(s,d)
