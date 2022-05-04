@@ -1,0 +1,8 @@
+*.o
+*.d
+*.so
+*.log
+*.exe
+*.min
+*.elf
+.vscode/*
