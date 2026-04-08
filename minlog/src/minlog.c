@@ -139,7 +139,7 @@ char* getTimeStamp(char* pbuf, size_t buflen)
 
     return pbuf;
 }
-#else
+#else	// ( __VSOLD__ )
 char* getTimeStamp(char* pbuf, size_t buflen)
 {
     struct timespec tms;
@@ -150,12 +150,12 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     //time(&rawtime);
 
 
-    /* The C11 way */
-    if (!timespec_get(&tms, TIME_UTC))
-    {
-        SPRINTF(pbuf, buflen, "[timespec_get ERROR]");
-        return pbuf;
-    }
+    /* The C11 way EHFTODO */
+    //if (!timespec_get(&tms, TIME_UTC))
+    //{
+    //    SPRINTF(pbuf, buflen, "[timespec_get ERROR]");
+    //    return pbuf;
+    //}
 
     ///* POSIX.1-2008 way */
     //if (clock_gettime(CLOCK_REALTIME,&tms)) {
@@ -164,6 +164,11 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     //}
     //time (&rawtime);
 
+    /* Old GCC way EHFTODO */
+    if (clock_gettime(CLOCK_REALTIME, &tms) != 0) {
+        snprintf(pbuf, buflen, "[0000-00-00 00:00:00.000]");
+        return pbuf;
+    }
 
     if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_GMT) 
     {
@@ -172,13 +177,13 @@ char* getTimeStamp(char* pbuf, size_t buflen)
         //struct tm* gmtime_r(const time_t * timep, struct tm* result);				// Linux
         // %F  Short YYYY-MM-DD date, equivalent to %Y-%m-%d     2001-08-23
         // %T ISO 8601 time format (HH:MM:SS), equivalent to %H:%M:%S 14:55:02
-        strftime(buf_aux, 40, "[GMT %F %T.%%.3ld]", &tmGMT);
+        strftime(buf_aux, 40, "[%F %T.%%.3ld]", &tmGMT);
         SPRINTF(pbuf, buflen, buf_aux, tms.tv_nsec / 1000000);
     }
     else if (pminlog->timestamp_mode == MINLOG_TIMESTAMP_LOCAL)
     {
         LOCALTIME(&tms.tv_sec, &tmGMT);
-        strftime(buf_aux, 40, "[LOC %F %T.%%.3ld]", &tmGMT);
+        strftime(buf_aux, 40, "[%F %T.%%.3ld]", &tmGMT);
         SPRINTF(pbuf, buflen, buf_aux, tms.tv_nsec / 1000000);
     }
     else
@@ -193,7 +198,7 @@ char* getTimeStamp(char* pbuf, size_t buflen)
     return pbuf;
 }
 
-#endif
+#endif	// ( __VSOLD__ )
 
 void presentation_debug()
 {
@@ -274,10 +279,8 @@ void *minlog_file_open(int outconsole, int outfile, int timestamp_mode)
 {
 	const char *filename_only = "minlogdir";
 	char *argv_zero = "minlog";
-	int v0_len;
 	char *ppath;
 	pid_t pid;
-//	int log_id;
 
 
     if (pminlog != NULL) return 0;
@@ -311,12 +314,6 @@ void *minlog_file_open(int outconsole, int outfile, int timestamp_mode)
     //}
 
     if (pminlog->outfile != MINLOG_LEVEL_OFF) {
-        // No Necessity build log file path
-
-        //filename_only = strrchr(argv[0], '\\') + 1;
-        //v0_len = (int)strlen(argv[0]);
-
-        v0_len = (int)strlen(argv_zero);
 
         // Path of log directory by Environment variable
         ppath = GetEnv("MINLOG_LOGDIR");
@@ -324,10 +321,11 @@ void *minlog_file_open(int outconsole, int outfile, int timestamp_mode)
         // For log on files
         {
             char buf_value[50];
+            size_t size = (ppath) ? strlen(ppath) : 0;
 
             memset(pminlog->log_file_path, 0, sizeof(pminlog->log_file_path));
 
-            if (ppath)
+            if ((ppath) && (size > 0))
             {
                 STRCPY(pminlog->log_file_path, ppath, strlen(ppath));
 #ifdef _WIN32
@@ -338,19 +336,25 @@ void *minlog_file_open(int outconsole, int outfile, int timestamp_mode)
                 STRCAT(pminlog->log_file_path, filename_only, strlen(filename_only));
             }
             else
-            {
-                STRCPY(pminlog->log_file_path, argv_zero, v0_len);
+            {	// Get log directory from temporary directory
+#ifdef _WIN32
+				ppath = GetEnv("TEMP");
+				if (!ppath) {
+					ppath = "C:\\";
+				}
+
+				STRCPY(pminlog->log_file_path, ppath, strlen(ppath));
+#else
+                STRCPY(pminlog->log_file_path, "/tmp/", 5);
+#endif
+                STRCAT(pminlog->log_file_path, argv_zero, strlen(argv_zero));
             }
 
             STRCAT(pminlog->log_file_path, "_", 1);
             pid = getpid();
             SPRINTF(buf_value, sizeof(buf_value), "%6.6d", pid);
             STRCAT(pminlog->log_file_path, buf_value, sizeof(buf_value));
-            //STRCAT(pminlog->log_file_path, "_",1);
-            //log_id = unique_log_id++;
-            //SPRINTF(buf_value, sizeof(buf_value), "%4.4d", log_id);
-            //STRCAT(pminlog->log_file_path, buf_value, sizeof(buf_value));
-            STRCAT(pminlog->log_file_path, ".min", 4);
+            STRCAT(pminlog->log_file_path, ".log", 4);
         }
     }
 
@@ -471,21 +475,13 @@ int minlog_print(const char *pmesg, int size)
   msg_nibleL[tam] = '\0';
 
   minlog_out(msg_buffer);
-    if (header_info > 0) {
+  
+  if (header_info > 0) 
+  {
     minlog_out(msg_nibleH);
     minlog_out(msg_nibleL);
     }
 
-  //// Output to console
-  //printf("%s\n", msg_buffer);
-  //if (header_info > 0) {
-  //  // Ensuring that at least a certain amount of binary information can be consulted in poor console
-  //  msg_nibleH[MINLOG_MAXHDRBIN] = '\0';
-  //  msg_nibleL[MINLOG_MAXHDRBIN] = '\0';
-
-  //  printf("%s\n", msg_nibleH);
-  //  printf("%s\n", msg_nibleL);
-  //}
   return tam;
 }
 
@@ -493,19 +489,19 @@ int mindump(__uint64_t address, int size)
 {
 	int c = 0;
 	int indx = 0;
-	char line_buffer[1024];
+	char line_buffer[2048];
 	unsigned char* pmem = (unsigned char *)address;
 
   if (pminlog == NULL) return 0;
 
-	SPRINTF(line_buffer, sizeof(line_buffer), "[%p] %+3.3d ", pmem, size);
+	SPRINTF(line_buffer, sizeof(line_buffer), "[%12.12p] %+3.3d ", pmem, size);
 	// 01234567  . 
 	while (line_buffer[c] != '\0')
 	{
 		c++;
 	}
 
-	while (size > 0 && indx < size)
+	while (size > 0 && indx < size && sizeof(line_buffer) > (c+4))
 	{
 		line_buffer[c++] = charset[(*pmem) / 16];
 		line_buffer[c++] = charset[(*pmem) % 16];
@@ -513,7 +509,7 @@ int mindump(__uint64_t address, int size)
 		indx++;
 		pmem++;
 	}
-	while (size < 0 && indx > size)
+	while (size < 0 && indx > size && sizeof(line_buffer) > (c+4))
 	{
 		line_buffer[c++] = charset[(*pmem) / 16];
 		line_buffer[c++] = charset[(*pmem) % 16];

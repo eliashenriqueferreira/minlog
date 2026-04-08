@@ -15,35 +15,39 @@ int main(int argc, char **argv)
 
     printf("Hello World! Lets create a minimal logger for applications writed in C!\n");
 
-    if (argc > 1)
-    {
-        log = minlog_file_open(argv[0], MINLOG_LEVEL_DEBUG, argv[1], MINLOG_TIMESTAMP_GMT);   // Initializing with logfiles
-    }
-    else
-    {
-        log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_GMT);   // Initializing on console
-    }
+    /// Check timestamp formats and types 
+    printf("\n----------------- Check Timestamp Local ---------------------\n");
+    log = minlog_file_open(MINLOG_LEVEL_INFO, MINLOG_LEVEL_INFO, MINLOG_TIMESTAMP_LOCAL);
+    show_log_init(argc, argv);
+    minlog_close(log);
 
+    /// Check timestamp formats and types 
+    printf("\n----------------- Check Timestamp GMT ---------------------\n");
+    log = minlog_file_open(MINLOG_LEVEL_INFO, MINLOG_LEVEL_INFO, MINLOG_TIMESTAMP_GMT);
     show_log_init(argc,argv);
+    minlog_close(log);
 
+// EHFTODO
+//    /// Check timestamp formats and types 
+//    printf("\n----------------- Check Timestamp Little ---------------------\n");
+//    log = minlog_file_open(MINLOG_LEVEL_INFO, MINLOG_LEVEL_INFO, MINLOG_TIMESTAMP_LITTLE);
+//    show_log_init(argc, argv);
+//    minlog_close(log);
+
+    log = minlog_file_open(MINLOG_LEVEL_INFO, MINLOG_LEVEL_INFO, MINLOG_TIMESTAMP_LOCAL);
     test_dump_stack();
     test_minlog(argc,argv);
     minlog_close(log);
 
-    /// Check timestamp formats and types 
-    printf("\n----------------- Check Timestamp Local ---------------------\n");
-    log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_LOCAL);
-    show_log_init(argc, argv);
-    minlog_close(log);
 
-    printf("\n----------------- Check Timestamp for Seconds only ---------------------\n");
-    log = minlog_open(MINLOG_LEVEL_DEBUG, MINLOG_TIMESTAMP_SECONDS);
-    for (i = 0x20; i < 0x7f; i++, c++)
-    {
-        usleep(1000);
-        MINLOG_CRITICAL("Message with %d parameters. Decimal %.3d. Hexadecimal 0x%x. Character %c. Negative %d", 5, i, i, c, (-i));
-    }
-    minlog_close(log);
+//    printf("\n----------------- Check Timestamp for Seconds only ---------------------\n");
+//	log = minlog_file_open(MINLOG_LEVEL_INFO, MINLOG_LEVEL_INFO, MINLOG_TIMESTAMP_SECONDS);
+//    for (i = 0x20; i < 0x7f; i++, c++)
+//    {
+//        usleep(1000);
+//        MINLOG_CRITICAL("Message with %d parameters. Decimal %.3d. Hexadecimal 0x%x. Character %c. Negative %d", 5, i, i, c, (-i));
+//    }
+//    minlog_close(log);
 
 //// [GMT 2021-07-14 13:11:24.206][D]{  result==> [0079FAC4]=[65966596]}[146][f:\proj\ccpp\minlog\minlog\src\main.c]
 //// [GMT 2021-07-14 13:11:24.207][D]{diffP1Result[0079FAB4]=[0000000000000018]}[147][f:\proj\ccpp\minlog\minlog\src\main.c]
@@ -76,7 +80,7 @@ void test_dump_stack()
     short short3 = 0x3333;
     short short4 = 0x4444;
     unsigned char char5 = 0x55;
-    char buffer[] = { 0xbf,15,15,15,15,15,15,15,15,15,15,15,15,15,0xbf };
+    unsigned char buffer[] = { 0xbf,15,15,15,15,15,15,15,15,15,15,15,15,15,0xbf };
     unsigned char char6 = 0x66;
     __uint64_t uint64_7 = 0x7777777777777777;
     __uint64_t uint64_8 = 0x8888888888888888;
@@ -85,8 +89,8 @@ void test_dump_stack()
 
     MINLOG_DEBUG(" - - - - - - - - - - - - SHOWING MEMORY STACK STRUCTURE - - - - - - - - - - - - - - - - - - ");
 
-    mindump((__uint64_t)&int1, -64);
-    mindump((__uint64_t)&int1, +64);
+    mindump((__uint64_t)&int1, -51);
+    mindump((__uint64_t)&int1, +51);
     mindump((__uint64_t)&int1, sizeof(int1));
     mindump((__uint64_t)&int2, sizeof(int2));
     mindump((__uint64_t)&short3, sizeof(short3));
@@ -97,12 +101,12 @@ void test_dump_stack()
     mindump((__uint64_t)&uint64_8, sizeof(uint64_8));
     mindump((__uint64_t)buffer, sizeof(buffer));
     somatudo = int1 + int2 + short3 + short4 + char5 + char6 + uint64_7 + uint64_8;
-    //somatudo = (ull)int1 + (ull)int2 + (ull)short3 + (ull)short4 + (ull)char5 + (ull)char6 + (ull)uint64_7 + (ull)uint64_8;
     for (i = 0; i < sizeof(buffer); i++)
     {
         somatudo += buffer[i];
     }
     mindump((__uint64_t)&somatudo, sizeof(somatudo));
+	MINLOG_INFO("                                                                                                                                         ");
 }
 
 int test_minlog(int argc, char **argv)
@@ -163,7 +167,7 @@ int test_minlog(int argc, char **argv)
     if (0x007BFC00 == (__uint64_t)(&result)) {
         // Run, Copy Adresses and Rebuild;
         MINLOG_WARNING("------- NOT DANGEROUS IF YOU KNOW ADDRESS ALLOCATION  -------");
-        (*((__uint64_t *)(0x7fffffffdbF0))) = (*((__uint64_t *)(0x7fffffffdbE0)))+(*((__uint64_t *)(0x7fffffffdbE8)));
+//        (*((__uint64_t *)(0x7fffffffdbF0))) = (*((__uint64_t *)(0x7fffffffdbE0)))+(*((__uint64_t *)(0x7fffffffdbE8)));
     }
     MINLOG_DEBUG("New Result &result=%p Value=%X", &result, result);
 
@@ -187,5 +191,15 @@ void show_log_init(int argc, char** argv)
 #endif
 #endif
 
+#ifdef __linux__
+    MINLOG_INFO("INFO: - - - - - - - Compiled for Linux CentoOS7 - - - - - - - - ");
+    MINLOG_INFO("INFO: - - - - - - - Compiled with gcc %s  - - - - - - - - ", __VERSION__);
+//printf("Compiler: %s\n", __VERSION__);
+#endif
+
+#ifdef __GNUC__
+	MINLOG_INFO("INFO: - - __GNUC__ defined- - - - GCC version: %d.%d.%d - - - - ", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+//printf("GCC version: %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);	
+#endif
 }
 
