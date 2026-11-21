@@ -19,13 +19,29 @@
 
 It can be built using the [official gcc image](https://hub.docker.com/_/gcc):
 
-- At `make/conf/`, copy `config.mk` to a new local config file like `myconfig.local.mk`
+- At `docker/conf/`, copy `config.mk` to a new local config file like `myconfig.local.mk`
 - Change `CC` to `gcc` and `CXX` to `g++` (or whatever binary name your image uses)
-- Compile executing:
+- Compile executing docker.sh script:
   ```bash
-  docker run --rm -v "$(pwd):/usr/local/src" -w /usr/local/src gcc:7 make -C make
+  $ ./docker.sh rebuild
   ```
 - You should be seeing the `wrk/` directory with the compiled artifacts.
+- Use help:
+ ```bash
+ $ ./docker.sh help
+make: Entering directory '/usr/local/minlog/docker'
+Targets:
+. clean ........... clean all temporary and final artifacts
+. all ............. build all artifacts
+. rebuild ......... clean then all
+. install ......... install deliverables
+. run ............. run binary
+. help ............ show help
+. debug ........... changes flavor to debug
+. undebug ......... changes flavor to release
+. vars ............ show vars
+make: Leaving directory '/usr/local/minlog/docker'
+ ```
 
 (It's a good way to cross-compile Linux binaries from a Windows host)
 
